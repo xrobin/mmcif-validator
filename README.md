@@ -1,6 +1,6 @@
 # PDBe mmCIF Validator
 
-A Visual Studio Code extension to validate mmCIF files against the mmcif_pdbx dictionary with real-time error checking.
+A Visual Studio Code extension to validate mmCIF/CIF files against the PDBx/mmCIF dictionary (or any CIF dictionary) with real-time error checking.
 
 ## Features
 
@@ -8,7 +8,8 @@ A Visual Studio Code extension to validate mmCIF files against the mmcif_pdbx di
 - ✅ **Error highlighting** - Errors and warnings are highlighted directly in the editor with precise character positioning
 - ✅ **Syntax highlighting** - Full syntax highlighting for CIF files (tags, values, data blocks, loops, etc.)
 - ✅ **Hover information** - Hover over any value to see its corresponding key (`_tag`) and data block
-- ✅ **Dictionary support** - Works with local dictionary files or downloads from URL
+- ✅ **Dictionary support** - Works with the PDBx/mmCIF dictionary or any CIF dictionary format
+- ✅ **Flexible dictionary sources** - Uses local dictionary files or downloads from URL
 - ✅ **Auto-detection** - Automatically finds dictionary files in your workspace
 - ✅ **Comprehensive checks** - Validates mandatory items, enumerations, and schema compliance
 - ✅ **Works out-of-the-box** - No configuration required!
@@ -22,14 +23,14 @@ A Visual Studio Code extension to validate mmCIF files against the mmcif_pdbx di
 
 ## Quick Start
 
-The extension works out-of-the-box! It will automatically:
-- Download and cache the dictionary from the official wwPDB website (http://mmcif.pdb.org/dictionaries/ascii/mmcif_pdbx.dic)
+The extension works out-of-the-box! By default, it will automatically:
+- Download and cache the PDBx/mmCIF dictionary from the official wwPDB website (http://mmcif.pdb.org/dictionaries/ascii/mmcif_pdbx.dic)
 - Cache the dictionary locally for one month to balance freshness with download efficiency
-- Dictionary updates are usually released in conjunction with OneDep software releases
+- Dictionary updates are usually released in conjunction with OneDep software releases (average update frequency ~43 days)
 - Validate any `.cif` files you open
 - Show errors and warnings in the Problems panel with precise character positioning
 
-**No configuration required!**
+**No configuration required!** However, you can also use any other CIF dictionary by configuring the `dictionaryPath` or `dictionaryUrl` settings (see Configuration section below).
 
 ## Usage
 
@@ -51,10 +52,12 @@ The extension works with sensible defaults, but you can customize it in VSCode s
 ### Settings
 
 - **`mmcifValidator.dictionaryUrl`** (default: `http://mmcif.pdb.org/dictionaries/ascii/mmcif_pdbx.dic`)
-  - URL to download the dictionary from. Works out-of-the-box!
+  - URL to download the dictionary from. Defaults to the official PDBx/mmCIF dictionary, but you can use any CIF dictionary URL.
+  - Works out-of-the-box with the default!
   
 - **`mmcifValidator.dictionaryPath`** (optional)
   - Path to a local dictionary file. Can be absolute or relative to workspace root.
+  - Use this to validate against any CIF dictionary file (not just PDBx/mmCIF).
   - If not set, the extension will look for common dictionary filenames in the workspace.
   
 - **`mmcifValidator.pythonPath`** (default: `python`)
@@ -76,6 +79,20 @@ The extension works with sensible defaults, but you can customize it in VSCode s
 ```json
 {
   "mmcifValidator.dictionaryPath": "mmcif_pdbx_v5_next.dic"
+}
+```
+
+**Use a different CIF dictionary (e.g., for small molecule CIF files):**
+```json
+{
+  "mmcifValidator.dictionaryPath": "path/to/your/cif_dictionary.dic"
+}
+```
+
+**Use a dictionary from a different URL:**
+```json
+{
+  "mmcifValidator.dictionaryUrl": "https://example.com/path/to/dictionary.dic"
 }
 ```
 
@@ -122,7 +139,7 @@ The validator performs the following checks:
    - Validates that all referenced operation IDs exist in `_pdbx_struct_oper_list.id`
    - Example: If `oper_expression` is `(1-60)`, validates that operation IDs 1 through 60 all exist
 10. **Category-aware validation**: Only checks mandatory items for categories that are actually present in the mmCIF file
-11. **First data block only**: By default, only validates the first data block in files containing multiple data blocks (each starting with `data_`). This is the standard behavior for mmCIF validation.
+11. **First data block only**: By default, only validates the first data block in files containing multiple data blocks (each starting with `data_`)
 
 ## Error vs Warning Severity
 
@@ -173,7 +190,7 @@ These are advisory issues that may indicate problems but are not strictly requir
 
 ## Standalone Python Script
 
-This extension includes a standalone Python validation script that can be used independently of VSCode. See the `vscode-extension/python-script/` folder for:
+This extension includes a standalone Python validation script that can be used independently of VSCode. See the `python-script/` folder for:
 - The Python validation script (`validate_mmcif.py`)
 - Command-line usage instructions
 - Standalone validation without VSCode
