@@ -96,12 +96,13 @@ The extension works with sensible defaults, but you can customize it in VSCode s
 }
 ```
 
-**Custom Python path:**
+**Custom Python path** (use the full path to your Python executable if it is not in your PATH):
 ```json
 {
-  "mmcifValidator.pythonPath": "C:\\Python39\\python.exe"
+  "mmcifValidator.pythonPath": "/usr/bin/python3"
 }
 ```
+On Windows, use escaped backslashes, e.g. `"C:\\Python39\\python.exe"`.
 
 ## Validation Checks
 
