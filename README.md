@@ -75,6 +75,12 @@ For detailed information about all validation checks, error severity levels, and
 - **[Extension Documentation](vscode-extension/README.md)** - Complete guide for VSCode extension users
 - **[Python Script Documentation](vscode-extension/python-script/README.md)** - Command-line usage and API details
 
+## Releases
+
+Pre-built VS Code extension packages (`.vsix`) are published on the [GitHub Releases](https://github.com/PDBeurope/mmcif-validator/releases) page. To install a specific version, download the `.vsix` from the desired release and install it via **Extensions → ⋯ → Install from VSIX...**.
+
+Releases are created from git tags (e.g. `v0.1.6`). Pushing a version tag triggers a GitHub Action that builds the extension and attaches the `.vsix` to the corresponding release.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.
