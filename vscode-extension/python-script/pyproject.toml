@@ -10,7 +10,7 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.7"
 authors = [
-    { name = "Deborah Harrus", email = "deborah@ebi.ac.uk" }
+    { name = "Deborah Harrus", email = "dharrus@ebi.ac.uk" }
 ]
 maintainers = [
     { name = "Protein Data Bank in Europe (PDBe), EMBL-EBI" }
