@@ -2,7 +2,7 @@
 
 All notable changes to the PDBe mmCIF Validator extension will be documented in this file.
 
-# [Unreleased]
+# Released
 
 ## [0.1.6] - 2026-03-03
 
@@ -26,6 +26,8 @@ All notable changes to the PDBe mmCIF Validator extension will be documented in 
 
 ### Improved
 - **Python structure**: `validate_mmcif.py` is now a thin CLI/orchestration layer (~265 lines); parser and validator classes live in dedicated modules for maintainability.
+
+# [Unreleased]
 
 ## [0.1.5] - 2026-02-27
 
