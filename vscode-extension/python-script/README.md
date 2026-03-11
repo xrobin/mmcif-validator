@@ -1,6 +1,6 @@
 # PDBe mmCIF Validator - Python Script
 
-**Version 0.1.6**
+**Version 0.1.7**
 
 A standalone Python script to validate mmCIF/CIF files against the PDBx/mmCIF dictionary or any CIF dictionary.
 
@@ -19,6 +19,7 @@ A standalone Python script to validate mmCIF/CIF files against the PDBx/mmCIF di
 - ✅ Supports local dictionary files or downloading from URL (works with PDBx/mmCIF dictionary or any CIF dictionary format)
 - ✅ **Enhanced JSON output** - Includes precise character positions and column indices for programmatic error handling
 - ✅ **Exit codes** - Returns 0 for success, 1 for errors (useful for CI/CD integration)
+- ✅ **Deposition readiness in JSON** - When validation runs, the JSON output includes an optional `deposition_readiness` object (percentage, filled/total counts, detected method, missing categories, missing items with row/key and validation-error flag)
 
 ## Installation
 
@@ -180,7 +181,7 @@ All of these inherit from `MmCIFValidatorError`, so you can catch that for any v
 
 The script outputs:
 - Validation errors and warnings with line numbers
-- JSON output for programmatic use
+- JSON output for programmatic use (includes optional `deposition_readiness` when validation runs)
 - Exit code 0 for success, 1 for errors
 
 Example output:
@@ -234,6 +235,8 @@ The script outputs JSON at the end with the following structure:
 - `column`: Global column index (0-based) within the row (for loop data) or `null` for non-loop items
 - `start_char`: Character start position (0-based) within the line for precise highlighting, or `null` if not available
 - `end_char`: Character end position (0-based) within the line for precise highlighting, or `null` if not available
+
+The output may also include a **`deposition_readiness`** object (used by the VSCode extension): `percentage` (0–100), `filled_count`, `total_count`, `method_detected` (xray/em/nmr or null), `message` (e.g. when method is unknown), `missing_categories` (list of category names), and `missing_items` (list of `{ category, item, row_index?, row_key?, has_validation_error? }`). Items with a validation error are counted as not filled and have `has_validation_error: true`.
 
 The `start_char` and `end_char` fields enable precise highlighting of the exact problematic value, even when the same value appears multiple times on a line.
 
