@@ -18,6 +18,7 @@ export interface DepositionMissingItem {
     item: string;
     row_index?: number;
     row_key?: string;
+    has_validation_error?: boolean;
 }
 
 export interface DepositionReadiness {

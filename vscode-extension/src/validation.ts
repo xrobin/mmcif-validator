@@ -132,7 +132,8 @@ function scriptFailureUserMessage(failure: ScriptFailure): string {
 function formatMissingItem(m: DepositionMissingItem): string {
     const row = m.row_index !== undefined ? ` row ${m.row_index + 1}` : '';
     const key = m.row_key !== undefined ? ` (${m.row_key})` : '';
-    return `${m.item}${row}${key}`;
+    const err = m.has_validation_error ? ' [validation error]' : '';
+    return `${m.item}${row}${key}${err}`;
 }
 
 function showDepositionReadiness(dep: DepositionReadiness, outputChannel: vscode.OutputChannel): void {

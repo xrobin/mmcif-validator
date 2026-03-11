@@ -40,7 +40,8 @@ class MissingItemsItem extends vscode.TreeItem {
 function formatMissingItemLabel(m: DepositionMissingItem): string {
     const row = m.row_index !== undefined ? ` row ${m.row_index + 1}` : '';
     const key = m.row_key !== undefined ? ` [${m.row_key}]` : '';
-    return `${m.item}${row}${key}`;
+    const err = m.has_validation_error ? ' (validation error)' : '';
+    return `${m.item}${row}${key}${err}`;
 }
 
 class MissingItemLeaf extends vscode.TreeItem {

@@ -4,9 +4,11 @@ Compute deposition-readiness indicator from a parsed mmCIF and dictionary.
 Uses mandatory categories (per method or common) and deposition-mandatory items
 from the dictionary (_pdbx_item.mandatory_code or _item.mandatory_code).
 Uses row-level checks: every row in a loop category must have all mandatory items filled.
+Items that have a validation error (severity "error") are counted as not filled and
+reported with has_validation_error=True.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Set, Tuple
 
 from protocol import DepositionReadiness
 from dict_parser import DictionaryParser
@@ -27,9 +29,33 @@ def _get_category_key(dictionary: DictionaryParser, category: str) -> Optional[s
     return cat_info["keys"][0]
 
 
+def _item_row_indices_with_validation_errors(
+    mmcif: MmCIFParser,
+    errors: List[object],
+) -> Set[Tuple[str, int]]:
+    """
+    From validation errors with severity "error", build set of (item_name, row_index).
+    row_index is the index in the category loop (from mmcif.items[item_name]).
+    """
+    result: Set[Tuple[str, int]] = set()
+    for e in errors:
+        if getattr(e, "severity", None) != "error":
+            continue
+        item_name = getattr(e, "item", None)
+        line_num = getattr(e, "line", None)
+        if item_name is None or line_num is None or item_name not in mmcif.items:
+            continue
+        for row_idx, iv in enumerate(mmcif.items[item_name]):
+            if iv.line_num == line_num:
+                result.add((item_name, row_idx))
+                break
+    return result
+
+
 def compute_deposition_readiness(
     dictionary: DictionaryParser,
     mmcif: MmCIFParser,
+    validation_errors: Optional[List[object]] = None,
 ) -> DepositionReadiness:
     """
     Compute deposition-readiness percentage, method, and missing categories/items.
@@ -37,9 +63,13 @@ def compute_deposition_readiness(
     - Mandatory categories from completeness lists (xray/em/nmr or common).
     - Mandatory items per category from dictionary.deposition_mandatory_items.
     - Row-level: for each row in a category, every mandatory item must be filled (?/. count as missing).
+    - Items that have a validation error (severity "error") are counted as not filled and
+      included in missing_items with has_validation_error=True.
     - total_count = sum over (mandatory category) of num_rows * num_mandatory_items; missing category = 1 row.
     - When method is unknown, only common categories are counted and percentage is capped at 50%.
     """
+    validation_errors = validation_errors or []
+    item_row_errors = _item_row_indices_with_validation_errors(mmcif, validation_errors)
     mandatory_by_method, common_categories, method_specific = load_mandatory_categories()
     file_categories = mmcif.categories
     method = detect_method(file_categories, method_specific)
@@ -102,6 +132,12 @@ def compute_deposition_readiness(
                     val = row[item_name].value
                     if val in ("?", ".") or not val.strip():
                         entry = {"category": cat, "item": item_name, "row_index": row_index}
+                        if row_key_val is not None:
+                            entry["row_key"] = row_key_val
+                        missing_items.append(entry)
+                    elif (item_name, row_index) in item_row_errors:
+                        # Value present but has a validation error -> count as not filled
+                        entry = {"category": cat, "item": item_name, "row_index": row_index, "has_validation_error": True}
                         if row_key_val is not None:
                             entry["row_key"] = row_key_val
                         missing_items.append(entry)
