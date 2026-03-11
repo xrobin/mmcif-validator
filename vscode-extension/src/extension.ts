@@ -12,6 +12,7 @@ import { getSettings, getScriptPath } from './config';
 import { getCachedDictionaryPath, downloadAndCacheDictionary } from './dictionary';
 import { createHoverProvider } from './hover';
 import { validateDocument } from './validation';
+import { updateDepositionReadiness, registerDepositionView } from './depositionView';
 
 export function activate(context: vscode.ExtensionContext): void {
     const outputChannel = vscode.window.createOutputChannel('PDBe mmCIF Validator');
@@ -60,8 +61,11 @@ export function activate(context: vscode.ExtensionContext): void {
         outputChannel,
         extensionPath: context.extensionPath,
         depositionStatusBarItem: vscode.window.createStatusBarItem('mmcif.deposition', vscode.StatusBarAlignment.Right),
+        onDepositionUpdate: updateDepositionReadiness,
     };
     context.subscriptions.push(validationCtx.depositionStatusBarItem);
+
+    registerDepositionView(context);
 
     vscode.workspace.onDidOpenTextDocument((document) => {
         if (document.languageId === 'cif' || document.fileName.endsWith('.cif')) {

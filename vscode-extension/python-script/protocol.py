@@ -9,7 +9,7 @@ Both sides (Python script and extension) should use this contract so that
 changes to one can be reflected in the other via a single definition.
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any, List, Literal, Optional
 
 # ---------------------------------------------------------------------------
@@ -64,12 +64,14 @@ class ValidationResult:
 
 @dataclass
 class DepositionReadiness:
-    """Deposition-readiness indicator: percentage and method detection."""
+    """Deposition-readiness indicator: percentage, method, and missing categories/items."""
     percentage: float  # 0–100, or capped at 50 when method is unknown
     filled_count: int
     total_count: int
     method_detected: Optional[str] = None  # "xray" | "em" | "nmr" | null when unknown
     message: Optional[str] = None  # e.g. "Experimental method could not be determined; only common categories counted."
+    missing_categories: List[str] = field(default_factory=list)  # Mandatory categories absent from the file
+    missing_items: List[dict] = field(default_factory=list)  # Each: {"category", "item", "row_index"?, "row_key"?}
 
     def to_dict(self) -> dict:
         return asdict(self)

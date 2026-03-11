@@ -13,12 +13,21 @@ export interface ValidationErrorItem {
     end_char?: number;
 }
 
+export interface DepositionMissingItem {
+    category: string;
+    item: string;
+    row_index?: number;
+    row_key?: string;
+}
+
 export interface DepositionReadiness {
     percentage: number;
     filled_count: number;
     total_count: number;
     method_detected?: string | null;
     message?: string | null;
+    missing_categories?: string[];
+    missing_items?: DepositionMissingItem[];
 }
 
 export interface ValidationResult {

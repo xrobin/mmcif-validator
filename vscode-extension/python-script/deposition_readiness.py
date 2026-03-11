@@ -3,9 +3,10 @@ Compute deposition-readiness indicator from a parsed mmCIF and dictionary.
 
 Uses mandatory categories (per method or common) and deposition-mandatory items
 from the dictionary (_pdbx_item.mandatory_code or _item.mandatory_code).
+Uses row-level checks: every row in a loop category must have all mandatory items filled.
 """
 
-from typing import Dict, Set, Tuple
+from typing import List, Optional
 
 from protocol import DepositionReadiness
 from dict_parser import DictionaryParser
@@ -18,14 +19,12 @@ from completeness.mandatory_categories import (
 )
 
 
-def _is_filled(mmcif: MmCIFParser, item_name: str) -> bool:
-    """True if the file has the item and at least one value that is not ? or ."""
-    if item_name not in mmcif.items:
-        return False
-    for _, value, _, _ in mmcif.items[item_name]:
-        if value not in ("?", "."):
-            return True
-    return False
+def _get_category_key(dictionary: DictionaryParser, category: str) -> Optional[str]:
+    """Return the first key item name for the category (e.g. _pdbx_contact_author.id), or None."""
+    cat_info = dictionary.categories.get(category)
+    if not cat_info or not cat_info.get("keys"):
+        return None
+    return cat_info["keys"][0]
 
 
 def compute_deposition_readiness(
@@ -33,11 +32,12 @@ def compute_deposition_readiness(
     mmcif: MmCIFParser,
 ) -> DepositionReadiness:
     """
-    Compute deposition-readiness percentage and method.
+    Compute deposition-readiness percentage, method, and missing categories/items.
 
-    - Mandatory categories come from completeness lists (xray/em/nmr or common).
-    - Mandatory items per category come from dictionary.deposition_mandatory_items.
-    - Percentage = (filled mandatory items) / (total mandatory items) * 100.
+    - Mandatory categories from completeness lists (xray/em/nmr or common).
+    - Mandatory items per category from dictionary.deposition_mandatory_items.
+    - Row-level: for each row in a category, every mandatory item must be filled (?/. count as missing).
+    - total_count = sum over (mandatory category) of num_rows * num_mandatory_items; missing category = 1 row.
     - When method is unknown, only common categories are counted and percentage is capped at 50%.
     """
     mandatory_by_method, common_categories, method_specific = load_mandatory_categories()
@@ -60,13 +60,53 @@ def compute_deposition_readiness(
 
     total_count = 0
     filled_count = 0
+    missing_categories: List[str] = []
+    missing_items: List[dict] = []
 
     for cat in mandatory_categories:
         items = dictionary.deposition_mandatory_items.get(cat, set())
-        for item_name in items:
-            total_count += 1
-            if _is_filled(mmcif, item_name):
-                filled_count += 1
+        if not items:
+            continue
+
+        if cat not in file_categories:
+            missing_categories.append(cat)
+            # One conceptual row missing for the whole category
+            total_count += len(items)
+            for item_name in items:
+                missing_items.append({"category": cat, "item": item_name})
+            continue
+
+        rows = mmcif.get_category_rows(cat)
+        key_item = _get_category_key(dictionary, cat)
+
+        if not rows:
+            # Category present but no data rows: all items missing for one row
+            total_count += len(items)
+            for item_name in items:
+                missing_items.append({"category": cat, "item": item_name, "row_index": 0})
+            continue
+
+        for row_index, row in enumerate(rows):
+            row_key_val = None
+            if key_item and key_item in row:
+                row_key_val = row[key_item].value  # For display (e.g. "id=1")
+            for item_name in items:
+                total_count += 1
+                if item_name not in row:
+                    filled_count += 0
+                    entry = {"category": cat, "item": item_name, "row_index": row_index}
+                    if row_key_val is not None:
+                        entry["row_key"] = row_key_val
+                    missing_items.append(entry)
+                else:
+                    val = row[item_name].value
+                    if val in ("?", ".") or not val.strip():
+                        entry = {"category": cat, "item": item_name, "row_index": row_index}
+                        if row_key_val is not None:
+                            entry["row_key"] = row_key_val
+                        missing_items.append(entry)
+                    else:
+                        filled_count += 1
 
     if total_count == 0:
         percentage = 0.0
@@ -81,4 +121,6 @@ def compute_deposition_readiness(
         total_count=total_count,
         method_detected=method_detected,
         message=message,
+        missing_categories=missing_categories,
+        missing_items=missing_items,
     )

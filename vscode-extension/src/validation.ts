@@ -11,6 +11,7 @@ import {
     ValidationErrorItem,
     ValidationResult,
     DepositionReadiness,
+    DepositionMissingItem,
     ScriptFailure,
     ErrorCode,
     isScriptFailure,
@@ -25,6 +26,7 @@ export interface ValidationContext {
     outputChannel: vscode.OutputChannel;
     extensionPath: string | undefined;
     depositionStatusBarItem?: vscode.StatusBarItem;
+    onDepositionUpdate?: (dep: DepositionReadiness | null) => void;
 }
 
 /**
@@ -127,6 +129,12 @@ function scriptFailureUserMessage(failure: ScriptFailure): string {
     }
 }
 
+function formatMissingItem(m: DepositionMissingItem): string {
+    const row = m.row_index !== undefined ? ` row ${m.row_index + 1}` : '';
+    const key = m.row_key !== undefined ? ` (${m.row_key})` : '';
+    return `${m.item}${row}${key}`;
+}
+
 function showDepositionReadiness(dep: DepositionReadiness, outputChannel: vscode.OutputChannel): void {
     outputChannel.appendLine('');
     outputChannel.appendLine('--- Deposition readiness ---');
@@ -137,6 +145,17 @@ function showDepositionReadiness(dep: DepositionReadiness, outputChannel: vscode
     if (dep.message) {
         outputChannel.appendLine(`  ${dep.message}`);
     }
+    const missingCats = dep.missing_categories ?? [];
+    const missingItems = dep.missing_items ?? [];
+    if (missingCats.length > 0) {
+        outputChannel.appendLine('  Missing categories: ' + missingCats.join(', '));
+    }
+    if (missingItems.length > 0) {
+        outputChannel.appendLine('  Missing items:');
+        for (const m of missingItems) {
+            outputChannel.appendLine('    - ' + formatMissingItem(m));
+        }
+    }
     outputChannel.appendLine('');
 }
 
@@ -144,7 +163,13 @@ function setDepositionStatusBar(dep: DepositionReadiness, item?: vscode.StatusBa
     if (!item) return;
     const methodNote = dep.method_detected ? ` (${dep.method_detected})` : ' (method unknown)';
     item.text = `$(check-all) Deposition: ${dep.percentage}%${methodNote}`;
-    item.tooltip = dep.message ?? `${dep.filled_count}/${dep.total_count} mandatory items filled`;
+    const missingCats = dep.missing_categories ?? [];
+    const missingItems = dep.missing_items ?? [];
+    const parts = [`${dep.filled_count}/${dep.total_count} mandatory items filled`];
+    if (dep.message) parts.push(dep.message);
+    if (missingCats.length > 0) parts.push(`Missing categories: ${missingCats.join(', ')}`);
+    if (missingItems.length > 0) parts.push(`Missing items: ${missingItems.length} (see Output channel or "Deposition Readiness" in Explorer sidebar)`);
+    item.tooltip = parts.join('\n');
     item.show();
 }
 
@@ -162,6 +187,7 @@ export async function validateDocument(
     if (!settings.enabled) {
         diagnosticCollection.delete(document.uri);
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
         return;
     }
 
@@ -171,6 +197,7 @@ export async function validateDocument(
     if (!source) {
         diagnosticCollection.delete(document.uri);
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
         return;
     }
 
@@ -185,6 +212,7 @@ export async function validateDocument(
         );
         diagnosticCollection.delete(document.uri);
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
         return;
     }
 
@@ -212,6 +240,7 @@ export async function validateDocument(
         vscode.window.showErrorMessage(`Dictionary file not found: ${dictSource}`);
         diagnosticCollection.delete(document.uri);
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
         return;
     }
 
@@ -255,14 +284,17 @@ export async function validateDocument(
         diagnostics = [scriptFailureToDiagnostic(json)];
         vscode.window.showErrorMessage(scriptFailureUserMessage(json));
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
     } else if (isValidationResult(json)) {
         diagnostics = buildDiagnosticsFromResult(document, json);
         const dep = (json as ValidationResult).deposition_readiness;
         if (dep) {
             showDepositionReadiness(dep, outputChannel);
             setDepositionStatusBar(dep, ctx.depositionStatusBarItem);
+            ctx.onDepositionUpdate?.(dep);
         } else {
             clearDepositionStatusBar(ctx.depositionStatusBarItem);
+            ctx.onDepositionUpdate?.(null);
         }
     } else if (exitCode === 1 && stderr) {
         const match = stderr.match(/Error: (.+)/);
@@ -276,8 +308,10 @@ export async function validateDocument(
             ];
         }
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
     } else {
         clearDepositionStatusBar(ctx.depositionStatusBarItem);
+        ctx.onDepositionUpdate?.(null);
     }
 
     diagnosticCollection.set(document.uri, diagnostics);

@@ -86,6 +86,14 @@
           "description": "Validation timeout in seconds. Increase for very large mmCIF files (default 60, max 600)."
         }
       }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "mmcifDeposition",
+          "name": "Deposition Readiness"
+        }
+      ]
     }
   },
   "scripts": {
