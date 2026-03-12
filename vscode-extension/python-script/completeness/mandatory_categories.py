@@ -90,12 +90,12 @@ def detect_method(file_categories: Set[str], method_specific: Dict[str, Set[str]
     Detect experimental method from categories present in the file.
 
     If the file contains at least one category that is specific to a method, that method is returned.
-    Priority: xray, then em, then nmr (first match wins).
+    Priority: em, then nmr, then xray (first match wins).
     Otherwise returns METHOD_UNKNOWN.
     """
     if not file_categories:
         return METHOD_UNKNOWN
-    for method in (METHOD_XRAY, METHOD_EM, METHOD_NMR):
+    for method in (METHOD_EM, METHOD_NMR, METHOD_XRAY):
         if method_specific[method] & file_categories:
             return method
     return METHOD_UNKNOWN
