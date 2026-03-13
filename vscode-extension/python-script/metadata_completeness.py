@@ -1,5 +1,5 @@
 """
-Compute deposition-readiness indicator from a parsed mmCIF and dictionary.
+Compute metadata-completeness indicator from a parsed mmCIF and dictionary.
 
 Uses mandatory categories (per method or common) and deposition-mandatory items
 from the dictionary (_pdbx_item.mandatory_code or _item.mandatory_code).
@@ -53,13 +53,13 @@ def _item_row_indices_with_validation_errors(
     return result
 
 
-def compute_deposition_readiness(
+def compute_metadata_completeness(
     dictionary: DictionaryParser,
     mmcif: MmCIFParser,
     validation_errors: Optional[List[object]] = None,
 ) -> MetadataCompleteness:
     """
-    Compute deposition-readiness percentage, method, and missing categories/items.
+    Compute metadata-completeness percentage, method, and missing categories/items.
 
     - Mandatory categories from completeness lists (xray/em/nmr or common).
     - Mandatory items per category from dictionary.deposition_mandatory_items.
@@ -68,6 +68,8 @@ def compute_deposition_readiness(
       included in missing_items with has_validation_error=True.
     - total_count = sum over (mandatory category) of num_rows * num_mandatory_items; missing category = 1 row.
     - When method is unknown, only common categories are counted and percentage is capped at 50%.
+    - Certain category groups (e.g. entity-source categories from entity_src_cat.list) are treated
+      as satisfied when at least one category from the group is present.
     """
     validation_errors = validation_errors or []
     item_row_errors = _item_row_indices_with_validation_errors(mmcif, validation_errors)
@@ -185,3 +187,4 @@ def compute_deposition_readiness(
         missing_categories=missing_categories,
         missing_items=missing_items,
     )
+

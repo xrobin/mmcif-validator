@@ -14,7 +14,7 @@ All notable changes to the PDBe mmCIF Validator extension will be documented in 
 - **Row-level checks**: Every row in a mandatory loop category must have all mandatory items filled; missing or `?`/`.` values count as not filled; percentage = filled/total.
 - **Method detection**: Experimental method (xray/em/nmr) inferred from file categories; when unknown, only common categories are used and score is capped at 50%.
 - **Validation errors as not filled**: Items with a validation error (severity "error") are counted as not filled and listed in missing items with "validation error"; second pass includes errors in mandatory categories even when the item is not deposition-mandatory in the dictionary.
-- **Python**: `deposition_readiness` module, `completeness` package (mandatory category lists, including an entity-source group where at least one category must be present), `dict_parser` deposition-mandatory items (`_pdbx_item.mandatory_code`); protocol extended with `MetadataCompleteness` (missing_categories, missing_items, has_validation_error) and JSON `metadata_completeness` field.
+- **Python**: `metadata_completeness` module, `completeness` package (mandatory category lists, including an entity-source group where at least one category must be present), `dict_parser` deposition-mandatory items (`_pdbx_item.mandatory_code`); protocol extended with `MetadataCompleteness` (missing_categories, missing_items, has_validation_error) and JSON `metadata_completeness` field.
 
 ### Changed
 - Validation script always outputs JSON (with optional `metadata_completeness`) on both success and failure so the extension can show metadata completeness info.

@@ -34,7 +34,7 @@ from download import get_cache_dir, get_cached_dictionary_path, download_diction
 from dict_parser import DictionaryParser
 from cif_parser import MmCIFParser
 from validator import MmCIFValidator
-from deposition_readiness import compute_deposition_readiness
+from metadata_completeness import compute_metadata_completeness
 
 # Module-level logger for library integration with existing logging mechanisms
 logger = logging.getLogger(__name__)
@@ -213,10 +213,10 @@ Examples:
         # Build JSON output for VSCode extension (always include metadata_completeness when available)
         json_output = validation_result_from_errors(errors)
         try:
-            dep = compute_deposition_readiness(dictionary, mmcif, validation_errors=errors)
+            dep = compute_metadata_completeness(dictionary, mmcif, validation_errors=errors)
             json_output["metadata_completeness"] = dep.to_dict()
         except Exception as e:
-            logger.debug("Deposition readiness computation skipped: %s", e)
+            logger.debug("Metadata completeness computation skipped: %s", e)
 
         # Output results
         if errors:
