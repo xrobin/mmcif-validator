@@ -4,7 +4,7 @@ All notable changes to the PDBe mmCIF Validator extension will be documented in 
 
 # Released
 
-## [0.1.8] - 2026-03-17
+## [0.1.81] - 2026-03-17
 
 ### Added
 - **Testing suite** (`testing/`): Regression test suite for the validator.
